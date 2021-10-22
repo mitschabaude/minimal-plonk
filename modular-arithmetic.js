@@ -1,12 +1,14 @@
 // all functions operate on BigInt
-export { modExp, modInvert };
+export { mod, modExp, modInvert };
 
 // fast modular exponentiation, a^n % p
 function modExp(a, n, p) {
-  if (n < 0n) {
-    a = modInvert(a, p);
-    n = -n;
-  }
+  // if (n < 0n) {
+  //   a = modInvert(a, p);
+  //   n = -n;
+  // }
+  a = mod(a, p);
+  n = mod(n, p - 1n);
   let x = 1n;
   for (; n > 0n; n >>= 1n) {
     if (n & 1n) x = mod(x * a, p);
@@ -18,7 +20,7 @@ function modExp(a, n, p) {
 // inverting with EGCD, 1/a in Z_p
 function modInvert(a, p) {
   if (a === 0n) throw Error("cannot invert 0");
-  a = a % p;
+  a = mod(a, p);
   let b = p;
   let x = 0n;
   let y = 1n;
@@ -26,7 +28,7 @@ function modInvert(a, p) {
   let v = 0n;
   while (a !== 0n) {
     let q = b / a;
-    let r = b % a;
+    let r = mod(b, a);
     let m = x - u * q;
     let n = y - v * q;
     b = a;

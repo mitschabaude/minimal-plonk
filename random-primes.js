@@ -61,7 +61,7 @@ function millerRabinIsOddPrime(n) {
   // write n - 1 = 2^r * d, d odd
   let d = n - 1n;
   let r = 0n;
-  for (; d % 2n !== 0n; d /= 2n, r++) {}
+  for (; d % 2n !== 0n; d /= 2n, r++);
 
   WitnessLoop: for (let i = 0; i < k; i++) {
     let a = randomBigIntRange(2n, n - 2n);

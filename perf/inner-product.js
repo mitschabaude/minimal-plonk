@@ -1,16 +1,20 @@
 import howSlow from "howslow";
-import { commit, proveEval, validateEval } from "../inner-product-modp.js";
-// import { bigIntArrayToBytes } from "../bigint.js";
+import {
+  commit,
+  proveEval,
+  randomFieldElement,
+  validateEval,
+} from "../inner-product-modp.js";
 
 howSlow(
   "inner-product",
   async (start, stop) => {
-    let f = [10n, -5n, 213n, 0n, 87691n, 1n];
+    let f = Array(10).fill(0).map(randomFieldElement);
 
     start("commit");
     let comf = commit(f);
     stop();
-    let z = 11398476n;
+    let z = randomFieldElement();
 
     start("prove");
     let { fz, proof } = await proveEval(f, z);

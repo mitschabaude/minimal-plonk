@@ -1,11 +1,12 @@
 // polynomial commitment scheme using the "inner product argument" in a normal prime field Z_p
-import basis from "./basis-2048-1e+4.js";
+import basis from "./basis-1024-1e+4.js";
 import { bigIntArrayToBytes, bytesToBigInt } from "./bigint.js";
 import { sha512 } from "#builtin-crypto";
 import { mod, modExp } from "./modular-arithmetic.js";
+import { randomBigIntLength } from "./random-primes.js";
 const { p } = basis;
 
-export { commit, proveEval, validateEval };
+export { commit, proveEval, validateEval, randomFieldElement };
 
 function commit(f) {
   return scalarProdGroup(f, basis.G);
@@ -47,30 +48,21 @@ async function proveEval(f, z) {
 
 async function validateEval(comf, z, fz, proof) {
   let { a, transcript, length } = proof;
-  let G = basis.G.slice(0, length);
-  let b = powersOfZ(z, length);
   let A = comf;
   let v = fz;
-  for (
-    let i = 0, half = length >> 1;
-    length > 1;
-    i++, length = half, half >>= 1
-  ) {
-    let blo = b.slice(0, half);
-    let bhi = b.slice(half, length);
-    let Glo = G.slice(0, half);
-    let Ghi = G.slice(half, length);
+  let xProd = Array(length).fill(1n);
+  for (let i = 0, half = length >> 1; half > 0; i++, half >>= 1) {
     let [LA, RA, Lab, Rab] = transcript.slice(4 * i, 4 * i + 4);
     let x = await hashTranscript(transcript.slice(0, 4 * i + 4));
     let x2 = multField(x, x);
-
-    b = vecAddField(scalarMultFieldVec(x, blo), bhi);
-    G = vecAddGroup(scalarMultGroupVec(x, Glo), Ghi);
+    for (let j = 0; j < length; j++) {
+      if (!(half & j)) xProd[j] = multField(x, xProd[j]);
+    }
     A = addGroup(scalarMultGroup(x, A), LA, scalarMultGroup(x2, RA));
     v = addField(multField(x, v), Lab, multField(x2, Rab));
   }
-  [G] = G;
-  [b] = b;
+  let G = scalarProdGroup(xProd, basis.G.slice(0, length));
+  let b = scalarProdField(xProd, powersOfZ(z, length));
   let aG = scalarMultGroup(a, G);
   let ab = multField(a, b);
   return A === aG && v === ab;
@@ -170,4 +162,7 @@ function padPower2(f) {
   let k = f.length.toString(2).length;
   if (f.length > 1 << k) k++;
   return f.concat(Array((1 << k) - f.length).fill(0n));
+}
+function randomFieldElement() {
+  return randomBigIntLength(basis.byteLength) % p;
 }

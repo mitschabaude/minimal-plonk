@@ -9,7 +9,7 @@ import {
 howSlow(
   "inner-product",
   async (start, stop) => {
-    let f = Array(10).fill(0).map(randomFieldElement);
+    let f = Array(1000).fill(0).map(randomFieldElement);
 
     start("commit");
     let comf = commit(f);
@@ -24,7 +24,7 @@ howSlow(
     let ok = await validateEval(comf, z, fz, proof);
     stop();
   },
-  { numberOfRuns: 10 }
+  { numberOfRuns: 0, numberOfWarmups: 0 }
 );
 
 // BigInt.prototype.toJSON = function () {

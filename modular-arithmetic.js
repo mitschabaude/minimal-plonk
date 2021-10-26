@@ -1,18 +1,26 @@
 // all functions operate on BigInt
-export { mod, modExp, modInvert };
+export { mod, modExp, modExpNoPrime, modInvert };
 
 // fast modular exponentiation, a^n % p
 function modExp(a, n, p) {
-  // if (n < 0n) {
-  //   a = modInvert(a, p);
-  //   n = -n;
-  // }
   a = mod(a, p);
+  // this assumes that p is prime, so that a^(p-1) % p = 1
   n = mod(n, p - 1n);
   let x = 1n;
   for (; n > 0n; n >>= 1n) {
     if (n & 1n) x = mod(x * a, p);
     a = mod(a * a, p);
+  }
+  return x;
+}
+// fast modular exponentiation, a^n % q, whithout assuming q is prime
+function modExpNoPrime(a, n, q) {
+  a = mod(a, q);
+  if (n < 0n) throw Error("n must be positive");
+  let x = 1n;
+  for (; n > 0n; n >>= 1n) {
+    if (n & 1n) x = mod(x * a, q);
+    a = mod(a * a, q);
   }
   return x;
 }

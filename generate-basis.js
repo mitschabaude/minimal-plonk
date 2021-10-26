@@ -1,7 +1,11 @@
 // node generate-basis.js --nbits 1024 --nbasis 10000
 import fs from "node:fs";
 import minimist from "minimist";
-import { largePrimes, randomBigIntRange } from "./random-primes.js";
+import {
+  largePrimes,
+  randomBigIntRange,
+  randomLargePrime,
+} from "./random-primes.js";
 let argv = minimist(process.argv.slice(2));
 
 BigInt.prototype.toJSON = function () {
@@ -10,6 +14,7 @@ BigInt.prototype.toJSON = function () {
 
 let bitLength = argv.nbits ?? 1024;
 let p = largePrimes[bitLength];
+if (!p) p = randomLargePrime(bitLength >> 3);
 let n = argv.nbasis ?? 10000;
 console.log(bitLength, n);
 

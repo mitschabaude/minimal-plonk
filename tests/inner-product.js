@@ -1,5 +1,5 @@
 import test from "ava";
-import { commit, proveEval, validateEval } from "../inner-product-modp.js";
+import { commit, proveEval, validateEval } from "../src/inner-product-modp.js";
 // import { bigIntArrayToBytes } from "../bigint.js";
 
 test("valid", async (t) => {

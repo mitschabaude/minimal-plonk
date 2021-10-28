@@ -9,8 +9,8 @@
   },
   "imports": {
     "#builtin-crypto": {
-      "node": "./builtin-crypto.node.js",
-      "default": "./builtin-crypto.js"
+      "node": "./src/builtin-crypto.node.js",
+      "default": "./src/builtin-crypto.js"
     }
   },
   "keywords": [],

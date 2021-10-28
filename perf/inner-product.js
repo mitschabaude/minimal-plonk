@@ -4,7 +4,7 @@ import {
   proveEval,
   randomFieldElement,
   validateEval,
-} from "../inner-product-modp.js";
+} from "../src/inner-product-modp.js";
 
 howSlow(
   "inner-product",

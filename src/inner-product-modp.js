@@ -1,5 +1,5 @@
 // polynomial commitment scheme using the "inner product argument" in a normal prime field Z_p
-import basis from "./basis-768-1e+4.js";
+import basis from "./basis-128-1e+4.js";
 import { bigIntArrayToBytes, bytesToBigInt } from "./bigint.js";
 import { sha512 } from "#builtin-crypto";
 import { mod, modExp } from "./modular-arithmetic.js";

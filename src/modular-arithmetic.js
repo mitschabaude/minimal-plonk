@@ -50,7 +50,7 @@ function modInverse(a, p) {
   return mod(x, p);
 }
 
-// a = [a_i] -> [a_i^(-1)] with only (3 + epsilon) multiplications per element
+// a = [a_i] -> [a_i^(-1)] with only (3 + o(1)) multiplications per element
 function batchInverse(a, p) {
   let n = a.length;
   // prods = [1, a0, a0*a1, ..., a0*....*a(n-2)], prod = a0*....*a(n-1)

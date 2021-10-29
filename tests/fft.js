@@ -1,5 +1,7 @@
 import test from "ava";
 import {
+  evalPoly,
+  evalPolyBarycentric,
   evalPolyFFT,
   interpolateIFFT,
   padLength,
@@ -119,6 +121,21 @@ test("polynomial-algebra", ({ assert }) => {
   let fshift = vectorMul(f, W, p);
   let fshift0 = interpolateIFFT([...Ff.slice(1), Ff[0]], W, p);
   assert(arrayEqual(fshift, fshift0));
+});
+
+test("polynomial-evaluation", ({ is }) => {
+  let f = [45n, 0n, 4n, 0n, 1n]; // 45 + 4x^2 + x^4
+  let z = 3n;
+  let fz = 162n; // f(3) = 5*9 + 4*3^2 + 3^4 = 2 * 9*9
+
+  let fz0 = evalPoly(f, z, p);
+  is(fz, fz0);
+
+  let W = getAllRootsOfUnity(5, p);
+
+  let Ff = evalPolyFFT(f, W, p);
+  let fz1 = evalPolyBarycentric(Ff, z, W, p);
+  is(fz, fz1);
 });
 
 function arrayEqual(a, b) {

@@ -1,7 +1,7 @@
 // fft / ifft in prime field for mobing between
 // 1) coefficient representation f(x) = f0 + x*f1 + ... + f(n-1)x^(n-1)
 // 2) evaluation representation f(1) = Ff0, f(w) = Ff1, ..., f(w^(n-1)) = Ff(n-1)
-import { batchInverse, mod, modInverse } from "./modular-arithmetic.js";
+import { batchInverse, mod, modExp, modInverse } from "./modular-arithmetic.js";
 
 export {
   vectorMod,
@@ -13,6 +13,8 @@ export {
   interpolateIFFT,
   padPower2,
   padLength,
+  evalPoly,
+  evalPolyBarycentric,
 };
 
 // operations in evaluation space
@@ -85,6 +87,38 @@ function interpolateIFFT(Ff, w, p) {
     f[i] = mod(ninv * f[i], p);
   }
   return f;
+}
+
+// evaluate a polynomial at some z from coefficient representation in 2N
+function evalPoly(f, z, p) {
+  let n = f.length;
+  let zpow = 1n;
+  let sum = 0n;
+  for (let i = 0; i < n; i++) {
+    sum = mod(sum + f[i] * zpow, p);
+    zpow = mod(zpow * z, p);
+  }
+  return sum;
+}
+
+// evaluate a polynomial at some z from evaluation representation in 5N + o(N)
+// doing iFFT + normal evaluation would be O(N log(N))
+function evalPolyBarycentric(Ff, z, W, p) {
+  let n = Ff.length;
+  console.assert(n === W.length);
+  let Wmz = W.map((wi) => wi - z);
+  // 3N + o(N)
+  let denoms = batchInverse(Wmz, p);
+  // 2N
+  let sum = 0n;
+  for (let i = 0; i < n; i++) {
+    sum = mod(sum + Ff[i] * W[i] * denoms[i], p);
+  }
+  // o(N)
+  let nn = BigInt(n);
+  let zn = modExp(z, nn, p);
+  let ninv = modInverse(nn, p);
+  return mod((1n - zn) * ninv * sum, p);
 }
 
 function filterEven(_, i) {

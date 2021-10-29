@@ -13,6 +13,7 @@ export {
   interpolateIFFT,
   padPower2,
   padLength,
+  padPermutation,
   evalPoly,
   evalPolyBarycentric,
 };
@@ -130,12 +131,20 @@ function filterOdd(_, i) {
 
 // pad array with zeros up to the next power of 2
 function padPower2(f) {
-  let k = f.length.toString(2).length;
-  if (f.length > 1 << k) k++;
+  let k = Math.ceil((f.length - 1).toString(2).length);
   return f.concat(Array((1 << k) - f.length).fill(0n));
 }
 // pad array with zeros up to length n
 function padLength(f, n, fillValue = 0n) {
   if (n < f.length) throw Error("cannot pad up to length n");
   return f.concat(Array(n - f.length).fill(fillValue));
+}
+// pad array describing a permutation with identity (=dummy) values
+function padPermutation(f, n, valueToAdd = 0n) {
+  if (n < f.length) throw Error("cannot pad up to length n");
+  let padded = [...f];
+  for (let i = f.length; i < n; i++) {
+    padded[i] = BigInt(i) + valueToAdd;
+  }
+  return padded;
 }

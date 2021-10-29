@@ -1,7 +1,9 @@
-// node generate-basis.js --nbits 1024 --nbasis 10000
+// node generate-basis.js --pbits 256 --dbits 16
 import fs from "node:fs";
 import minimist from "minimist";
 import {
+  getAllRootsOfUnity,
+  getTwoCosets,
   largePrimes,
   randomBigIntRange,
   randomLargePrime,
@@ -12,31 +14,46 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
-let bitLength = argv.nbits ?? 1024;
+let bitLength = argv.pbits ?? 256;
 let p = largePrimes[bitLength];
 if (!p) p = randomLargePrime(bitLength >> 3);
-let n = argv.nbasis ?? 10000;
-console.log(bitLength, n);
+let degreeBitLength = argv.dbits ?? 10;
+let maxDegree = 1 << degreeBitLength;
+console.log(bitLength, maxDegree);
+
+let W = getAllRootsOfUnity(degreeBitLength, p);
+let [k1W, k2W, k1, k2] = getTwoCosets(W, p);
+
+// large collection of random Z_p elements for Pedersen hashing
+let G = randomBasisModP(p, maxDegree);
 
 fs.writeFileSync(
-  `basis-${bitLength}-${n.toExponential()}.js`,
+  `src/basis-${bitLength}-${degreeBitLength}.js`,
   "let basis = " +
     JSON.stringify({
-      p,
       bitLength,
       byteLength: bitLength >> 3,
-      // large collection of random Z_p elements, e.g. for Pedersen hashing
-      G: randomBasisModP(p, n),
-      // some additional random z_p elements
-      Q: randomBigIntRange(0n, p - 1n),
-      R: randomBigIntRange(0n, p - 1n),
+      degreeBitLength,
+      maxDegree,
+
+      p,
+      G,
+      W,
+      k1W,
+      k2W,
+      k1,
+      k2,
     }) +
     `
 
-basis.p = BigInt(basis.p);
-basis.Q = BigInt(basis.Q);
-basis.R = BigInt(basis.R);
-basis.G = basis.G.map((x) => BigInt(x));
+let scalars = ["p", "k1", "k2"];
+let arrays = ["G", "W", "k1W", "k2W"];
+for (let key of scalars) {
+  basis[key] = BigInt(basis[key]); 
+}
+for (let key of arrays) {
+  basis[key] = basis[key].map(BigInt); 
+}
 
 export default basis;
 `

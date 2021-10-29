@@ -1,9 +1,10 @@
 // polynomial commitment scheme using the "inner product argument" in a normal prime field Z_p
-import basis from "./basis-128-1e+4.js";
+import basis from "./basis-256-1e+4.js";
 import { bigIntArrayToBytes, bytesToBigInt } from "./bigint.js";
 import { sha512 } from "#builtin-crypto";
 import { mod, modExp } from "./modular-arithmetic.js";
 import { randomBigIntLength } from "./random-primes.js";
+import { padPower2 } from "./polynomials.js";
 const { p } = basis;
 
 export { commit, proveEval, validateEval, randomFieldElement };
@@ -157,12 +158,7 @@ function powersOfZ(z, n) {
   }
   return Z;
 }
-function padPower2(f) {
-  // round to next power of 2
-  let k = f.length.toString(2).length;
-  if (f.length > 1 << k) k++;
-  return f.concat(Array((1 << k) - f.length).fill(0n));
-}
+
 function randomFieldElement() {
   return randomBigIntLength(basis.byteLength) % p;
 }

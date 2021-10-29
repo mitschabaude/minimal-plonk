@@ -1,14 +1,26 @@
 // generate random large primes for using F_p
 // import { randomBytes } from "./builtin-crypto.js";
 import { randomBytes } from "#builtin-crypto";
+import { getByteLength } from "./bigint.js";
 import first1000Primes from "./first-1000-primes.js";
-import { modExpNoPrime } from "./modular-arithmetic.js";
+import { mod, modExp, modExpNoPrime } from "./modular-arithmetic.js";
 const knownPrimes = first1000Primes.map((x) => BigInt(x));
 
-export { largePrimes, randomLargePrime, randomBigIntLength, randomBigIntRange };
+export {
+  largePrimes,
+  randomLargePrime,
+  randomBigIntLength,
+  randomBigIntRange,
+  randomRootOfUnity,
+  getAllRootsOfUnity,
+};
 
 // random large primes found with miller-rabin test
 const largePrimes = {
+  // this is the Pallas prime with the advantage 2^32 divides (p-1)
+  // => Fp has nth roots of unity for n = 1,2,4,...,2^32
+  // => supports simple FFT for polynomials of degree up to 2^32 ~ 4*10^9
+  [256]: 0x40000000000000000000000000000000224698fc094cf91b992d30ed00000001n,
   [512]:
     7635864884812004142213145685301029448842881628344592815941449459274259914524547966108634212485176614061528107597724921441853616604056938042089748208144233n,
   [1024]:
@@ -77,7 +89,7 @@ function millerRabinIsOddPrime(n) {
 function randomBigIntRange(min, max) {
   while (true) {
     let n = 0n;
-    let length = Math.ceil((max - min).toString(16).length / 2);
+    let length = getByteLength(max - min);
     let lengthn = BigInt(length);
     let bytes = randomBytes(length);
     for (let i = 0n; i < lengthn; i++) {
@@ -87,16 +99,50 @@ function randomBigIntRange(min, max) {
   }
 }
 
-function randomBigIntLength(byteLength) {
+function randomBigIntLength(byteLength, enforceFullLength = true) {
   let lengthn = BigInt(byteLength);
   let bytes = randomBytes(byteLength);
   let n = 0n;
   for (let i = 0n; i < lengthn; i++) {
     let byte = bytes[i];
-    if (i === lengthn - 1n && byte < 128) {
+    if (enforceFullLength && i === lengthn - 1n && byte < 128) {
       byte += 128;
     }
     n += BigInt(byte) << (8n * i);
   }
   return n;
+}
+
+// find a primitive 2^k'th root of unity
+function randomRootOfUnity(k, p) {
+  k = BigInt(k);
+  if (k < 1n) throw Error("We expect k >= 1");
+  let nhalf = 1n << (k - 1n);
+  let m = (p - 1n) >> k;
+  if ((m << k) + 1n !== p)
+    throw Error("2^k must divide p-1 for finding roots of unity");
+  let byteLength = getByteLength(p);
+  while (true) {
+    // try w = x^((p-1)/n) for a random x
+    let x = mod(randomBigIntLength(byteLength, false), p);
+    let w = modExp(x, m, p);
+    // check if w is primitive
+    let m1 = modExp(w, nhalf, p);
+    if (m1 !== 1n) {
+      console.assert(mod(m1 + 1n, p) === 0n);
+      return w;
+    }
+  }
+}
+
+// returns all 2^k'th roots of unity as array of the form
+// [1n, w, w^2, ..., w^(2^k)]
+function getAllRootsOfUnity(k, p) {
+  let w = randomRootOfUnity(k, p);
+  let n = 1 << k;
+  let W = new Array(n);
+  for (let i = 0, wi = 1n; i < n; i++, wi = mod(wi * w, p)) {
+    W[i] = wi;
+  }
+  return W;
 }

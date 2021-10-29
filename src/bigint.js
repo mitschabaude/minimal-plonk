@@ -1,4 +1,4 @@
-export { bigIntArrayToBytes, bytesToBigInt };
+export { bigIntArrayToBytes, bytesToBigInt, getByteLength };
 
 function bigIntArrayToBytes(arr, bytesPerBigInt) {
   let n = arr.length;
@@ -19,4 +19,9 @@ function bytesToBigInt(bytes) {
     bigInt += BigInt(bytes[i]) << (i * 8n);
   }
   return bigInt;
+}
+
+// how many bytes a bigint has
+function getByteLength(x) {
+  return Math.ceil(x.toString(16).length / 2);
 }

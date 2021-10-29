@@ -13,6 +13,7 @@ export {
   randomBigIntRange,
   randomRootOfUnity,
   getAllRootsOfUnity,
+  getTwoCosets,
 };
 
 // random large primes found with miller-rabin test
@@ -145,4 +146,18 @@ function getAllRootsOfUnity(k, p) {
     W[i] = wi;
   }
   return W;
+}
+
+function getTwoCosets(W, p) {
+  let k1 = getElementNotInArray(W, p);
+  let k1W = W.map((w) => mod(k1 * w, p));
+  let k2 = getElementNotInArray(W.concat(k1W), p);
+  let k2W = W.map((w) => mod(k2 * w, p));
+  return [k1W, k2W, k1, k2];
+}
+
+function getElementNotInArray(W, p) {
+  for (let i = 1n; i < p; i++) {
+    if (!W.includes(i)) return i;
+  }
 }

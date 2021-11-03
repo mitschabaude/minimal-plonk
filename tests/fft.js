@@ -3,6 +3,7 @@ import {
   evalPoly,
   evalPolyBarycentric,
   evalPolyFFT,
+  evalPolyLagrange,
   interpolateIFFT,
   padLength,
   vectorDiv,
@@ -135,7 +136,9 @@ test("polynomial-evaluation", ({ is }) => {
 
   let Ff = evalPolyFFT(f, W, p);
   let fz1 = evalPolyBarycentric(Ff, z, W, p);
+  let fz2 = evalPolyLagrange(Ff, z, W, p);
   is(fz, fz1);
+  is(fz, fz2);
 });
 
 function arrayEqual(a, b) {

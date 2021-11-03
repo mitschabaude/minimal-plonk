@@ -16,6 +16,7 @@ export {
   padPermutation,
   evalPoly,
   evalPolyBarycentric,
+  evalPolyLagrange,
 };
 
 // operations in evaluation space
@@ -103,7 +104,7 @@ function evalPoly(f, z, p) {
 }
 
 // evaluate a polynomial at some z from evaluation representation in 5N + o(N)
-// doing iFFT + normal evaluation would be O(N log(N))
+// doing iFFT + normal evaluation would be O(N log(N)) + 2N per evaluation
 function evalPolyBarycentric(Ff, z, W, p) {
   let n = Ff.length;
   console.assert(n === W.length);
@@ -120,6 +121,42 @@ function evalPolyBarycentric(Ff, z, W, p) {
   let zn = modExp(z, nn, p);
   let ninv = modInverse(nn, p);
   return mod((1n - zn) * ninv * sum, p);
+}
+
+// more efficient and simpler lagrange evaluation,
+// without using the barycentric formula
+// 5N + o(N) = 5N - 3 multiplications + 1 inversion of N
+function evalPolyLagrange(Ff, z, W, p) {
+  let n = Ff.length;
+  // forwardProds = [1, (z - w[0]), ..., (z - w[0])...(z - w[n-2))]
+  // backwardProds = [(z - w[1])...(z - w[n-1]), ..., (z - w[n-1]), 1]
+  // L_i(z) = (1/n) * w[i] * forwardProds[i] * backwardProds[i]
+  let forwardProds = Array(n);
+  let backwardProds = Array(n);
+  let forwardProd = 1n;
+  let backwardProd = 1n;
+  // 2N - 4
+  for (let i = 0; true; i++) {
+    forwardProds[i] = forwardProd;
+    backwardProds[n - 1 - i] = backwardProd;
+    if (i === n - 1) break;
+    forwardProd = mod(forwardProd * (z - W[i]), p);
+    backwardProd = mod(backwardProd * (z - W[n - 1 - i]), p);
+  }
+  // N
+  let lagrangeEvals = Array(n);
+  for (let i = 0; i < n; i++) {
+    lagrangeEvals[i] = mod(forwardProds[i] * backwardProds[i], p);
+  }
+  // 2N
+  let sum = 0n;
+  for (let i = 0; i < n; i++) {
+    sum = mod(sum + Ff[i] * W[i] * lagrangeEvals[i], p);
+  }
+  // 1 + inversion
+  let nn = BigInt(n);
+  let ninv = modInverse(nn, p);
+  return mod(ninv * sum, p);
 }
 
 function filterEven(_, i) {

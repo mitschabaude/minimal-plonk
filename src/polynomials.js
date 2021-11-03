@@ -1,4 +1,4 @@
-// fft / ifft in prime field for mobing between
+// fft / ifft in prime field for moving between
 // 1) coefficient representation f(x) = f0 + x*f1 + ... + f(n-1)x^(n-1)
 // 2) evaluation representation f(1) = Ff0, f(w) = Ff1, ..., f(w^(n-1)) = Ff(n-1)
 import { batchInverse, mod, modExp, modInverse } from "./modular-arithmetic.js";

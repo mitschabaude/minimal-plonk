@@ -7,7 +7,7 @@ import { randomBigIntLength } from "./random-primes.js";
 import { padPower2 } from "./polynomials.js";
 const { p } = basis;
 
-export { commit, proveEval, validateEval, randomFieldElement };
+export { commit, proveEval, validateEval, randomFieldElement, hashTranscript };
 
 function commit(f) {
   return scalarProdGroup(f, basis.G);

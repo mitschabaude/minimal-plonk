@@ -9,6 +9,8 @@ export {
   vectorSub,
   vectorMul,
   vectorDiv,
+  leftShift,
+  divideByVanishing,
   evalPolyFFT,
   interpolateIFFT,
   padPower2,
@@ -17,9 +19,10 @@ export {
   evalPoly,
   evalPolyBarycentric,
   evalPolyLagrange,
+  nextPower2,
 };
 
-// operations in evaluation space
+// vector operations in evaluation space
 // these can be turned into operations in coefficient space by wrapping in FFT, IFFT
 
 function vectorMod(a, p) {
@@ -52,6 +55,33 @@ function vectorMul(a, b, p) {
 }
 function vectorDiv(a, b, p) {
   return vectorMul(a, batchInverse(b, p), p);
+}
+
+function leftShift(a, k = 1) {
+  return [...a.slice(k), ...a.slice(0, k)];
+}
+
+// coefficient space
+
+function divideByVanishing(f, n, p) {
+  // polynomial division f(X) / (X^n - 1) with remainder
+  // very cheap, 0 multiplications
+  // strategy:
+  // start with q(X) = 0, r(X) = f(X)
+  // then start changing q, r while preserving the identity:
+  // f(X) = q(X) * (X^n - 1) + r(X)
+  // in every step, move highest-degree term of r into the product
+  // => r eventually has degree < n and we're done
+  let q = Array(f.length).fill(0n);
+  let r = [...f];
+  for (let i = f.length - 1; i >= n; i--) {
+    let leadingCoeff = r[i];
+    if (leadingCoeff === 0n) continue;
+    r[i] = 0n;
+    r[i - n] = mod(r[i - n] + leadingCoeff, p);
+    q[i - n] = mod(q[i - n] + leadingCoeff, p);
+  }
+  return [q, r];
 }
 
 // given taylor coefficients of f, returns evaluations on mult. subgroup
@@ -166,10 +196,14 @@ function filterOdd(_, i) {
   return i % 2 === 1;
 }
 
+function nextPower2(n) {
+  return 1 << Math.ceil((n - 1).toString(2).length);
+}
+
 // pad array with zeros up to the next power of 2
 function padPower2(f) {
-  let k = Math.ceil((f.length - 1).toString(2).length);
-  return f.concat(Array((1 << k) - f.length).fill(0n));
+  let n = nextPower2(f.length);
+  return f.concat(Array(n - f.length).fill(0n));
 }
 // pad array with zeros up to length n
 function padLength(f, n, fillValue = 0n) {
@@ -177,11 +211,11 @@ function padLength(f, n, fillValue = 0n) {
   return f.concat(Array(n - f.length).fill(fillValue));
 }
 // pad array describing a permutation with identity (=dummy) values
-function padPermutation(f, n, valueToAdd = 0n) {
+function padPermutation(f, n, valueToAdd = 0) {
   if (n < f.length) throw Error("cannot pad up to length n");
   let padded = [...f];
   for (let i = f.length; i < n; i++) {
-    padded[i] = BigInt(i) + valueToAdd;
+    padded[i] = i + valueToAdd;
   }
   return padded;
 }

@@ -10,6 +10,7 @@ export {
   vectorMul,
   vectorDiv,
   leftShift,
+  rightShift,
   divideByVanishing,
   evalPolyFFT,
   interpolateIFFT,
@@ -59,6 +60,10 @@ function vectorDiv(a, b, p) {
 
 function leftShift(a, k = 1) {
   return [...a.slice(k), ...a.slice(0, k)];
+}
+function rightShift(a, k = 1) {
+  let n = a.length;
+  return [...a.slice(n - k), ...a.slice(0, n - k)];
 }
 
 // coefficient space

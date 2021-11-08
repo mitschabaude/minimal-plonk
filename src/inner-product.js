@@ -154,9 +154,9 @@ function transcriptToBytes(transcript) {
   for (let x of transcript) {
     if (typeof x === "bigint") bigIntArray.push(x);
     else if (Array.isArray(x)) bigIntArray.push(...x);
-    else if (x instanceof PointG1)
-      bigIntArray.push(...x.toAffine().map((y) => y.value));
-    else {
+    else if (x instanceof PointG1) {
+      bigIntArray.push(x.x.value, x.y.value, x.z.value);
+    } else {
       throw Error("unknown type");
     }
   }

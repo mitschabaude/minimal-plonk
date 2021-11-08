@@ -1,5 +1,5 @@
 import test from "ava";
-import basis from "../src/basis-modp-256-10.js";
+import basis from "../src/basis-256-10.js";
 import {
   getAllRootsOfUnity,
   getCosets,
@@ -24,7 +24,7 @@ import {
   hashTranscript,
   proveEval,
   validateEval,
-} from "../src/inner-product-modp.js";
+} from "../src/inner-product.js";
 import { mod, modExp, modInverse } from "../src/modular-arithmetic.js";
 
 const FFT_EXPANSION_FACTOR = 4;
@@ -88,7 +88,7 @@ test("plonk", async ({ assert, is }) => {
   let snark;
   // go into a scope to not accidentally reuse computed values in the verifier
   {
-    // round 1 - witness values
+    // round 1 - witness values (from "PLONK by hand")
     let a = [3n, 4n, 5n, 9n];
     let b = [3n, 4n, 5n, 16n];
     let c = [9n, 16n, 25n, 25n];
@@ -102,10 +102,7 @@ test("plonk", async ({ assert, is }) => {
     is(mod(a0 + a1 + a2 + a3, p), a[0]);
     is(evalPoly(aCoeff, root, p), a[1]);
     is(evalPolyLagrange(a, root, roots, p), a[1]);
-    // console.log(aCoeff);
-    let aroot = (await proveEval(aCoeff, root)).fz;
-    // TODO
-    // is(aroot, a[1]);
+    is((await proveEval(aCoeff, root)).fz, a[1]);
 
     // round 2 - build permutation check polynomial z(X)
     let beta = await hashTranscript([...transcript, 0n]);
@@ -213,7 +210,6 @@ test("plonk", async ({ assert, is }) => {
 
     let [quotientCoeff, remainder] = divideByVanishing(fullEqCoeff, n, p);
     assert(remainder.every((r) => r === 0n));
-    // console.log(fullEqCoeff);
 
     let quotient = evalPolyFFT(quotientCoeff, expandedRoots, p);
     let zH = ZH(n, expandedRoots, p);
@@ -234,7 +230,6 @@ test("plonk", async ({ assert, is }) => {
     // round 4/5 - evaluation
     // TODO tons of efficiency improvements
     let zeta = await hashTranscript(transcript);
-    // let zeta = root;
     let witnessEval = await Promise.all(
       witnessCoeff.map((a) => proveEval(a, zeta))
     );
@@ -255,17 +250,17 @@ test("plonk", async ({ assert, is }) => {
       quotientEval,
     };
 
-    // many, many sanity checks
+    // these are just sanity checks
     let zHZeta = evalPolyLagrange(zH, zeta, expandedRoots, p);
     let zetaPowerN = modExp(zeta, BigInt(n), p);
     is(zHZeta, mod(zetaPowerN - 1n, p));
+    let zShiftedEval1 = evalPolyLagrange(leftShift(z), zeta, roots, p);
+    is(zShiftedEval1, zShiftedEval.fz);
 
     let [aZeta, bZeta, cZeta] = witnessEval.map((a) => a.fz);
     let [qlZeta, qrZeta, qoZeta, qmZeta, qcZeta] = selectors.map((q) =>
       evalPolyLagrange(q, zeta, roots, p)
     );
-    // console.log({ aZeta, bZeta, cZeta });
-    // console.log({ qlZeta, qrZeta, qoZeta, qmZeta, qcZeta });
     let eq1Zeta = mod(
       aZeta * bZeta * qmZeta +
         aZeta * qlZeta +
@@ -274,12 +269,8 @@ test("plonk", async ({ assert, is }) => {
         qcZeta,
       p
     );
-    // TODO
     let eq1Zeta1 = evalPolyLagrange(gateEq, zeta, expandedRoots, p);
-    // is(eq1Zeta, eq1Zeta1);
-
-    let zShiftedEval1 = evalPolyLagrange(leftShift(z), zeta, roots, p);
-    // is(zShiftedEval1, zShiftedEval.fz);
+    is(eq1Zeta, eq1Zeta1);
   }
 
   // the verifier
@@ -344,8 +335,7 @@ test("plonk", async ({ assert, is }) => {
     let eq3 = (z - 1n) * L0;
     let lhs = mod(eq1 + alpha * eq2 + alpha ** 2n * eq3, p);
     let rhs = mod(zH * (tlo + zetaPowerN * tmi + zetaPowerN ** 2n * thi), p);
-    // TODO
-    // is(lhs, rhs);
+    is(lhs, rhs);
   }
 });
 

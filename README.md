@@ -18,3 +18,17 @@ After that, it would be interesting to start testing some non-trivial circuits a
 - **Inner product argument:** [./src/inner-product.js](https://github.com/mitschabaude/minimal-plonk/blob/main/src/inner-product.js) implements the _polynomial commitment scheme (PCS)_ described [here](https://www.cryptologie.net/article/528/what-is-an-inner-product-argument-part-1/), [here](https://dankradfeist.de/ethereum/2021/07/27/inner-product-arguments.html) and [here](https://doc-internal.dalek.rs/bulletproofs/notes/inner_product_proof/index.html).
 
 - **PLONK:** [./src/plonk.js](https://github.com/mitschabaude/minimal-plonk/blob/main/src/inner-product.js) implements the Prover / Verifier algorithms of PLONK over IPA, with no special gates, no plookup, no zero knowledge, very inefficient use of the PCS.
+
+## Test
+
+To run tests in watch mode:
+
+```sh
+npx ava --watch
+```
+
+To inspect performance in Chrome:
+
+```
+npx chrode perf/plonk.js --no-headless
+```

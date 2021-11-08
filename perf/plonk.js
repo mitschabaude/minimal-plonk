@@ -3,7 +3,7 @@ import { plonkProve, plonkVerify } from "../src/plonk.js";
 import { nextPower2 } from "../src/polynomials.js";
 
 howSlow(
-  "inner-product",
+  "plonk",
   async (start, stop) => {
     let ql = [0n, 0n, 0n, 1n];
     let qr = [0n, 0n, 0n, 1n];

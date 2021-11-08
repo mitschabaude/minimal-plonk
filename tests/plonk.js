@@ -1,5 +1,5 @@
 import test from "ava";
-import basis from "../src/basis-256-10.js";
+import basis from "../src/basis-modp-256-10.js";
 import {
   getAllRootsOfUnity,
   getCosets,

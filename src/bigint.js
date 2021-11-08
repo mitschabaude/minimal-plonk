@@ -6,8 +6,16 @@ function bigIntArrayToBytes(arr, bytesPerBigInt) {
   let bytes = new Uint8Array(totalBytes);
   for (let i = 0, j = 0; i < n; i++, j += bytesPerBigInt) {
     let bigInt = arr[i];
+    if (typeof bigInt !== "bigint") {
+      console.log(bigInt);
+      throw Error("is not bigint");
+    }
     for (let k = 0; k < bytesPerBigInt; k++, bigInt >>= 8n) {
-      bytes[j + k] = Number(bigInt & 255n);
+      // if (typeof bigInt !== "bigint") {
+      //   throw Error("is not bigint");
+      // }
+      let number = bigInt & 255n;
+      bytes[j + k] = Number(number);
     }
   }
   return bytes;

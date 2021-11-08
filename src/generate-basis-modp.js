@@ -1,12 +1,16 @@
-// node generate-basis.js --dbits 16
+// node generate-basis.js --pbits 256 --dbits 16
 import fs from "node:fs";
 import minimist from "minimist";
-import { getAllRootsOfUnity, getCosets } from "./random-primes.js";
-import bls from "@noble/bls12-381";
-import { randomCurvePoint } from "./bls12-381.js";
+import {
+  getAllRootsOfUnity,
+  getCosets,
+  largePrimes,
+  randomBigIntRange,
+  randomLargePrime,
+} from "./random-primes.js";
 let argv = minimist(process.argv.slice(2));
 
-let bitLength = 256;
+let bitLength = argv.pbits ?? 256;
 let degreeBitLength = argv.dbits ?? 10;
 let maxColumns = 10;
 
@@ -14,18 +18,19 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
-let p = bls.CURVE.r;
+let p = largePrimes[bitLength];
+if (!p) p = randomLargePrime(bitLength >> 3);
 let maxDegree = 1 << degreeBitLength;
 console.log(bitLength, maxDegree);
 
 let W = getAllRootsOfUnity(degreeBitLength, p);
 let { cosets, cofactors } = getCosets(W, p, maxColumns);
 
-// large collection of random curve elements for Pedersen hashing
-let G = randomCurveBasis(maxDegree);
+// large collection of random Z_p elements for Pedersen hashing
+let G = randomBasisModP(p, maxDegree);
 
 fs.writeFileSync(
-  `src/basis-${bitLength}-${degreeBitLength}.js`,
+  `src/basis-modp-${bitLength}-${degreeBitLength}.js`,
   "let basis = " +
     JSON.stringify({
       bitLength,
@@ -42,9 +47,8 @@ fs.writeFileSync(
     `
 
 let scalars = ["p"];
-let arrays = ["W", "cofactors"];
+let arrays = ["G", "W", "cofactors"];
 let arrayOfArrays = ["cosets"];
-let arrayOfPoints = ["G"];
 for (let key of scalars) {
   basis[key] = BigInt(basis[key]); 
 }
@@ -54,26 +58,13 @@ for (let key of arrays) {
 for (let key of arrayOfArrays) {
   basis[key] = basis[key].map(a => a.map(BigInt)); 
 }
-for (let key of arrayOfPoints) {
-  basis[key] = basis[key].map(a => {
-    a.x = BigInt(a.x);
-    a.y = BigInt(a.y);
-    return a;
-  }); 
-}
 
 export default basis;
 `
 );
 
-function randomCurveBasis(length) {
+function randomBasisModP(p, length) {
   return Array(length)
     .fill(0n)
-    .map(() => {
-      let point = randomCurvePoint();
-      let [x, y] = point.toAffine();
-      x = x.value;
-      y = y.value;
-      return { x, y };
-    });
+    .map(() => randomBigIntRange(0n, p - 1n));
 }

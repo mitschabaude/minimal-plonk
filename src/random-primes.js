@@ -9,6 +9,7 @@ const knownPrimes = first1000Primes.map((x) => BigInt(x));
 export {
   largePrimes,
   randomLargePrime,
+  randomFieldElement,
   randomBigIntLength,
   randomBigIntRange,
   randomRootOfUnity,
@@ -85,6 +86,11 @@ function millerRabinIsOddPrime(n) {
     return false;
   }
   return true;
+}
+
+function randomFieldElement(p, byteLength) {
+  if (byteLength === undefined) byteLength = getByteLength(p);
+  return randomBigIntLength(byteLength, false) % p;
 }
 
 function randomBigIntRange(min, max) {

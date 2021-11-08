@@ -26,11 +26,3 @@ test("valid", async (t) => {
   ok = await validateEval(comf, z, fz, proof);
   t.assert(ok === false, "tampered proof is not validated");
 });
-
-// BigInt.prototype.toJSON = function () {
-//   return Buffer.from(bigIntArrayToBytes([this], basis.byteLength)).toString(
-//     "base64"
-//   );
-// };
-// console.log("proof length:", JSON.stringify([comf, proof, z, fz]).length);
-// console.log("poly length:", JSON.stringify(f).length);

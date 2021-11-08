@@ -26,29 +26,44 @@ import {
   validateEval,
 } from "../src/inner-product.js";
 import { mod, modExp, modInverse } from "../src/modular-arithmetic.js";
+import { plonkProve, plonkVerify } from "../src/plonk.js";
 
 const FFT_EXPANSION_FACTOR = 4;
 
-test("cosets", ({ is }) => {
-  const p = largePrimes[256];
-  let k = 12;
-  let n = 1 << k;
-  let W = getAllRootsOfUnity(k, p);
+test("plonk", async ({ assert, is }) => {
+  let ql = [0n, 0n, 0n, 1n];
+  let qr = [0n, 0n, 0n, 1n];
+  let qo = [-1n, -1n, -1n, -1n];
+  let qm = [1n, 1n, 1n, 0n];
+  let qc = [0n, 0n, 0n, 0n];
+  let selectors = [ql, qr, qo, qm, qc];
 
-  let {
-    cosets: [, k1W, k2W],
-  } = getCosets(W, p, 2);
+  let circuitLength = 5;
+  let n = nextPower2(circuitLength);
+  let permutation = [
+    [n, n + 1, n + 2, 2 * n],
+    [0, 1, 2, 2 * n + 1],
+    [3, n + 3, 2 * n + 3, 2 * n + 2],
+  ];
+  let circuit = { selectors, permutation, circuitLength };
 
-  let S = new Set(W.concat(k1W, k2W));
-  is(S.size, 3 * n);
+  let a = [3n, 4n, 5n, 9n];
+  let b = [3n, 4n, 5n, 16n];
+  let c = [9n, 16n, 25n, 25n];
+  let witness = [a, b, c];
+
+  let snark = await plonkProve(circuit, witness);
+  assert(snark.quotientEval !== undefined);
+
+  let ok = await plonkVerify(circuit, snark);
+  is(ok, true);
 });
 
-// TODO need IPA in elliptic curve group for this to work...
-test("plonk", async ({ assert, is }) => {
+test("plonk-written-out", async ({ assert, is }) => {
   const p = basis.p;
   let transcript = [];
 
-  let circuitLength = 4;
+  let circuitLength = 5;
   let numberOfColumns = 3;
   let n = nextPower2(circuitLength);
 
@@ -80,9 +95,6 @@ test("plonk", async ({ assert, is }) => {
   let permsToPolys = (p) => p.map((s) => s.map((i) => coroots[i]));
   let idPoly = permsToPolys(id);
   let sigmaPoly = permsToPolys(sigma);
-  // let s1 = permToPoly(sigma[0]);
-  // let s2 = permToPoly(sigma[1]);
-  // let s3 = permToPoly(sigma[2]);
 
   // the prover
   let snark;
@@ -98,8 +110,8 @@ test("plonk", async ({ assert, is }) => {
     transcript.push(...Cwitness);
 
     let aCoeff = witnessCoeff[0];
-    let [a0, a1, a2, a3] = aCoeff;
-    is(mod(a0 + a1 + a2 + a3, p), a[0]);
+    let sum = aCoeff.reduce((s, x) => s + x, 0n);
+    is(mod(sum, p), a[0]);
     is(evalPoly(aCoeff, root, p), a[1]);
     is(evalPolyLagrange(a, root, roots, p), a[1]);
     is((await proveEval(aCoeff, root)).fz, a[1]);
@@ -339,6 +351,20 @@ test("plonk", async ({ assert, is }) => {
   }
 });
 
+test("cosets", ({ is }) => {
+  const p = largePrimes[256];
+  let k = 12;
+  let n = 1 << k;
+  let W = getAllRootsOfUnity(k, p);
+
+  let {
+    cosets: [, k1W, k2W],
+  } = getCosets(W, p, 2);
+
+  let S = new Set(W.concat(k1W, k2W));
+  is(S.size, 3 * n);
+});
+
 function combinePointwise(combine, ...args) {
   let n = args[0][0].length;
   let combined = Array(n);
@@ -358,8 +384,6 @@ function ZH(n, roots, p) {
   }
   return zh;
 }
-
-function polyMUltiply(f, g, p) {}
 
 function selectRootsSubset(degree, columns, { cosets, maxDegree, maxColumns }) {
   // given n, finds next power of 2 and selects roots of unity and cosets with that length

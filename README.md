@@ -2,6 +2,8 @@
 
 This is a minimal implementation of [PLONK](https://eprint.iacr.org/2019/953) in JavaScript, instantiated with the inner product argument PCS on BLS12-381. It was created for myself as a learning experience, leaves out protocol features like zero knowledge, doesn't provide an actual way to create circuits and witnesses, and is neither efficient nor secure.
 
+To see the code in action, check out [this test](https://github.com/mitschabaude/minimal-plonk/blob/dc0c608ff56119b9f21ea6ee778d0dfbeea96e7b/tests/plonk.js#L33).
+
 ## TODOs
 
 The first thing to address would be the awful speed. Currently the runtime of both prover & verifier is completely dominated (>98%) by scalar multiplications. These should be made much more efficient by
